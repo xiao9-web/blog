@@ -76,16 +76,23 @@ mkdir -p /root/workspace/halo
 
 ---
 
-## 第二步：上传项目文件
+## 第二步：克隆项目到服务器
 
-在**本地电脑**终端执行（不是在服务器上）：
+SSH 登录服务器后，直接 `git clone`（含 Halo 源码子模块）：
 
 ```bash
-# 进入项目目录
-cd /Users/xiao9/workSpace/blog
+cd /root/workspace
+git clone --recurse-submodules https://github.com/xiao9-web/blog.git halo
+cd halo
+```
 
-# 上传 docker-compose.yml 到服务器
-scp docker-compose.yml root@<你的服务器IP>:/root/workspace/halo/
+以后更新配置只需要 `git pull`：
+
+```bash
+cd /root/workspace/halo
+git pull
+git submodule update --remote   # 更新 Halo 源码到最新版本
+docker compose up -d
 ```
 
 ---
@@ -342,6 +349,34 @@ docker compose up -d           # 重新创建容器
 | 数据库 | PostgreSQL 16 |
 | 容器化 | Docker + Docker Compose |
 | 服务器 | 阿里云 ECS |
+
+---
+
+## Halo 源码定制
+
+本项目通过 git submodule 引入了 Halo 源码（`halo-source/`），方便做个性化修改。
+
+### 构建自定义镜像
+
+```bash
+cd halo-source
+
+# 修改源码后构建镜像
+docker build -t my-halo:latest .
+
+# 修改 docker-compose.yml 中的镜像
+# image: halohub/halo:2.20  →  image: my-halo:latest
+```
+
+### 常见定制项
+
+| 定制内容 | 文件位置 |
+|----------|----------|
+| 修改默认主题 | `halo-source/application/src/main/resources/` |
+| 自定义 API | `halo-source/application/src/main/java/run/halo/app/` |
+| 修改页面模板 | `halo-source/application/src/main/resources/templates/` |
+
+> 如果不需要修改源码，服务器部署时 `git clone` 不带 `--recurse-submodules` 即可，Docker 镜像会直接使用官方 `halohub/halo:2.20`。
 
 ---
 
