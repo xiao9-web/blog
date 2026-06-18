@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  halo:
+    image: halohub/halo:2.20
+    container_name: halo
+    restart: on-failure:3
+    depends_on:
+      halodb:
+        condition: service_healthy
+    networks:
+      halo_network:
+    volumes:
+      - ./halo2:/root/.halo2
+    ports:
+      - "8090:8090"
+    command:
+      - --spring.r2dbc.url=r2dbc:pool:postgresql://halodb/halo
+      - --spring.r2dbc.username=halo
+      - --spring.r2dbc.password=openpostgresql
+      - --spring.sql.init.platform=postgresql
+      - --halo.external-url=http://localhost:8090/
+      - --halo.security.initializer.superadminusername=admin
+      - --halo.security.initializer.superadminpassword=admin123
+
+  halodb:
+    image: postgres:16-alpine
+    container_name: halodb
+    restart: on-failure:3
+    networks:
+      halo_network:
+    volumes:
+      - ./halo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_PASSWORD=openpostgresql
+      - POSTGRES_USER=halo
+      - POSTGRES_DB=halo
+
+networks:
+  halo_network:
