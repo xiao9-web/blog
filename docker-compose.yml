@@ -1,15 +1,13 @@
-version: "3.8"
-
 services:
   halo:
     image: halohub/halo:2.20
     container_name: halo
-    restart: on-failure:3
+    restart: unless-stopped
     depends_on:
       halodb:
         condition: service_healthy
     networks:
-      halo_network:
+      - halo_network
     volumes:
       - ./halo2:/root/.halo2
     ports:
@@ -26,9 +24,9 @@ services:
   halodb:
     image: postgres:16-alpine
     container_name: halodb
-    restart: on-failure:3
+    restart: unless-stopped
     networks:
-      halo_network:
+      - halo_network
     volumes:
       - ./halo-db:/var/lib/postgresql/data
     healthcheck:
