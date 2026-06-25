@@ -1,0 +1,56 @@
+# ============================================
+#  docker-compose.build.yml
+#  从本地源码构建 Halo 镜像并部署
+#  用于个性化定制后的部署
+#
+#  用法:
+#    docker compose -f docker-compose.build.yml build
+#    docker compose -f docker-compose.build.yml up -d
+# ============================================
+
+services:
+  halo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-halo:latest
+    container_name: halo
+    restart: unless-stopped
+    depends_on:
+      halodb:
+        condition: service_healthy
+    networks:
+      - halo_network
+    volumes:
+      - ./halo2:/root/.halo2
+    ports:
+      - "8090:8090"
+    command:
+      - --spring.r2dbc.url=r2dbc:pool:postgresql://halodb/halo
+      - --spring.r2dbc.username=halo
+      - --spring.r2dbc.password=${HALO_DB_PASSWORD}
+      - --spring.sql.init.platform=postgresql
+      - --halo.external-url=${HALO_EXTERNAL_URL}
+      - --halo.security.initializer.superadminusername=admin
+      - --halo.security.initializer.superadminpassword=${HALO_ADMIN_PASSWORD}
+
+  halodb:
+    image: postgres:16-alpine
+    container_name: halodb
+    restart: unless-stopped
+    networks:
+      - halo_network
+    volumes:
+      - ./halo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_PASSWORD=${HALO_DB_PASSWORD}
+      - POSTGRES_USER=halo
+      - POSTGRES_DB=halo
+
+networks:
+  halo_network:

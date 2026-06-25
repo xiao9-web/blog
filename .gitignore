@@ -11,3 +11,30 @@ halo-db/
 # IDE
 .idea
 .vscode
+
+# === Halo 源码构建产物 ===
+halo/.gradle/
+halo/build/
+halo/application/build/
+halo/api/build/
+halo/platform/build/
+halo/ui/build/
+halo/buildSrc/build/
+halo/**/build/
+halo/**/node_modules/
+halo/**/dist/
+halo/application/src/main/resources/console/
+halo/application/src/main/resources/uc/
+halo/application/src/main/resources/presets/
+
+# Gradle
+halo/.gradle/
+halo/bin/
+halo/out/
+
+# Java
+halo/**/*.class
+halo/**/*.jar
+halo/**/*.war
+halo/logs/
+halo/log/
