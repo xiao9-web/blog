@@ -1,6 +1,6 @@
 services:
   halo:
-    image: halohub/halo:2.20
+    image: halohub/halo:2.25
     container_name: halo
     restart: unless-stopped
     depends_on:
