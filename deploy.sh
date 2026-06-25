@@ -36,31 +36,32 @@ else
     cd "$DIR"
 fi
 
-# 3. 停旧容器，清数据
-docker compose down 2>/dev/null || true
-rm -rf halo2 halo-db
-echo "[OK] 旧数据已清理"
-
-# 4. 生成 .env
-if [ ! -f .env ]; then
+# 3. 判断首次部署还是更新
+if [ -f .env ]; then
+    # 更新模式：保留数据，只更新代码和镜像
+    echo "[!] 更新模式（保留数据）"
+    docker compose down 2>/dev/null || true
+else
+    # 首次部署：清理旧数据，生成密码
+    echo "[!] 首次部署模式"
+    docker compose down 2>/dev/null || true
+    rm -rf halo2 halo-db
     PW=$(openssl rand -base64 12 2>/dev/null || date +%s | sha256sum | base64 | head -c 16)
     cat > .env << EOF
 HALO_EXTERNAL_URL=http://47.116.137.192:8090/
 HALO_ADMIN_PASSWORD=${PW}
 HALO_DB_PASSWORD=${PW}
 EOF
-    echo "[OK] .env 已生成"
-else
-    echo "[OK] 使用已有 .env"
+    echo "[OK] .env 已生成，密码: ${PW}"
 fi
 
-# 5. 拉镜像 + 启动
-echo "[!] 拉取 Halo 镜像..."
+# 4. 拉镜像 + 启动
+echo "[!] 拉取最新镜像..."
 docker compose pull halo
 echo "[!] 启动容器..."
 docker compose up -d
 
-# 6. 等待就绪
+# 5. 等待就绪
 echo -n "[!] 等待 Halo 启动"
 for i in $(seq 1 30); do
     if curl -s -o /dev/null http://localhost:8090/console 2>/dev/null; then
@@ -71,7 +72,7 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
-# 7. 输出结果
+# 6. 输出结果
 PASS=$(grep ADMIN_PASSWORD .env | cut -d= -f2)
 echo ""
 echo "========================================"
